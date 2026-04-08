@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crucigrama indígena de Costa Rica</title>
+  <style>
+    :root {
+      --bg: #f7f2e8;
+      --panel: rgba(255, 251, 244, 0.92);
+      --ink: #1f2a1f;
+      --muted: #5a6558;
+      --accent: #7b4b2a;
+      --accent-strong: #5f3519;
+      --accent-soft: #e9c9a1;
+      --grid: #d3b48a;
+      --filled: #fff8ee;
+      --void: #8b6a4a;
+      --ok: #286847;
+      --bad: #a5392a;
+      --shadow: 0 18px 40px rgba(53, 33, 17, 0.16);
+      --cell-size: 42px;
+      --font-display: "Trebuchet MS", "Segoe UI", sans-serif;
+      --font-body: "Verdana", "Geneva", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-body);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(255, 214, 153, 0.65), transparent 32%),
+        radial-gradient(circle at right 20%, rgba(100, 134, 78, 0.24), transparent 24%),
+        linear-gradient(160deg, #efe5cf 0%, #f8f4eb 40%, #e6dcc3 100%);
+      padding: 24px;
+    }
+
+    .page {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: grid;
+      gap: 24px;
+    }
+
+    .hero,
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(123, 75, 42, 0.2);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    .hero {
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -60px -70px auto;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(123, 75, 42, 0.18), transparent 65%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(123, 75, 42, 0.1);
+      color: var(--accent-strong);
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 14px 0 10px;
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      line-height: 1.05;
+    }
+
+    .subtitle,
+    .source {
+      max-width: 75ch;
+      color: var(--muted);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .source {
+      margin-top: 10px;
+      font-size: 0.95rem;
+    }
+
+    .source a {
+      color: var(--accent-strong);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 1.15fr) minmax(290px, 0.85fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 22px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .toolbar p {
+      margin: 0;
+      flex: 1 1 280px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 11px 16px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.16s ease, opacity 0.16s ease, background 0.16s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: #fff8f1;
+    }
+
+    button.secondary {
+      background: rgba(123, 75, 42, 0.12);
+      color: var(--accent-strong);
+    }
+
+    button.ghost {
+      background: rgba(40, 104, 71, 0.1);
+      color: var(--ok);
+    }
+
+    button[hidden] {
+      display: none;
+    }
+
+    .status {
+      min-height: 48px;
+      border-radius: 18px;
+      background: rgba(255, 248, 238, 0.9);
+      border: 1px solid rgba(123, 75, 42, 0.14);
+      padding: 14px 16px;
+      color: var(--muted);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+    }
+
+    .status.ok {
+      color: var(--ok);
+      border-color: rgba(40, 104, 71, 0.24);
+      background: rgba(233, 248, 239, 0.94);
+    }
+
+    .status.bad {
+      color: var(--bad);
+      border-color: rgba(165, 57, 42, 0.24);
+      background: rgba(252, 237, 235, 0.96);
+    }
+
+    .grid-wrap {
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .crossword {
+      display: grid;
+      gap: 2px;
+      width: fit-content;
+      margin: 0 auto;
+      padding: 12px;
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(123, 75, 42, 0.11), rgba(123, 75, 42, 0.03));
+    }
+
+    .cell {
+      position: relative;
+      width: var(--cell-size);
+      height: var(--cell-size);
+      border-radius: 10px;
+      border: 1px solid var(--grid);
+      background: var(--filled);
+      overflow: hidden;
+    }
+
+    .cell.block {
+      background: linear-gradient(145deg, #8c6d4f, #6e5238);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .cell.active {
+      outline: 3px solid rgba(123, 75, 42, 0.28);
+      z-index: 2;
+    }
+
+    .cell.related {
+      background: #fff0d9;
+    }
+
+    .cell.correct {
+      background: #ebf8ee;
+    }
+
+    .cell.incorrect {
+      background: #fde9e7;
+    }
+
+    .cell-number {
+      position: absolute;
+      top: 3px;
+      left: 5px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: rgba(31, 42, 31, 0.78);
+      pointer-events: none;
+    }
+
+    .cell input {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: transparent;
+      text-align: center;
+      font: 700 1.2rem var(--font-display);
+      color: var(--ink);
+      text-transform: uppercase;
+      padding-top: 8px;
+    }
+
+    .cell input:focus {
+      outline: none;
+    }
+
+    .side h2 {
+      margin: 0 0 14px;
+      font-size: 1.12rem;
+      font-family: var(--font-display);
+      letter-spacing: 0.02em;
+    }
+
+    .legend {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .legend-card {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(123, 75, 42, 0.08);
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .clue-columns {
+      display: grid;
+      gap: 18px;
+    }
+
+    .clue-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+
+    .clue-list button {
+      width: 100%;
+      text-align: left;
+      border-radius: 16px;
+      background: rgba(255, 248, 238, 0.96);
+      border: 1px solid rgba(123, 75, 42, 0.12);
+      color: var(--ink);
+      padding: 12px 14px;
+      font-weight: 600;
+      line-height: 1.45;
+    }
+
+    .clue-list button.active {
+      background: #fff0d9;
+      border-color: rgba(123, 75, 42, 0.3);
+    }
+
+    .clue-list span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-weight: 500;
+      margin-top: 3px;
+    }
+
+    .facts {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      margin-top: 18px;
+    }
+
+    .fact {
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(255, 248, 238, 0.95);
+      border: 1px solid rgba(123, 75, 42, 0.12);
+    }
+
+    .fact strong {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--accent-strong);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 5px;
+    }
+
+    .fact p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 960px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 16px;
+      }
+
+      .hero,
+      .panel {
+        border-radius: 20px;
+      }
+
+      .cell {
+        --cell-size: 36px;
+      }
+
+      .cell input {
+        font-size: 1rem;
+        padding-top: 7px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="eyebrow">Crucigrama educativo</div>
+      <h1>Culturas aborígenes de Costa Rica</h1>
+      <p class="subtitle">
+        Resuelve el crucigrama usando una letra por casilla. Las palabras están relacionadas con pueblos,
+        territorios y elementos culturales indígenas de Costa Rica.
+      </p>
+      <p class="source">
+        Fuente de referencia consultada: <a href="https://es.wikipedia.org/wiki/Pueblos_ind%C3%ADgenas_de_Costa_Rica" target="_blank" rel="noreferrer">Pueblos indígenas de Costa Rica</a>.
+      </p>
+    </section>
+
+    <section class="layout">
+      <section class="panel">
+        <div class="toolbar">
+          <p>
+            Haz clic en una pista o en una casilla. El foco avanza solo al escribir y puedes moverte con las flechas del teclado.
+          </p>
+          <div class="button-row">
+            <button class="primary" id="checkButton" type="button">Revisar respuestas</button>
+            <button class="secondary" id="clearButton" type="button">Limpiar</button>
+            <button class="ghost" id="revealButton" type="button" hidden>Mostrar solución</button>
+          </div>
+        </div>
+
+        <div class="status" id="status" aria-live="polite">
+          Elige una pista para comenzar.
+        </div>
+
+        <div class="grid-wrap">
+          <div class="crossword" id="crossword" role="grid" aria-label="Crucigrama sobre pueblos indígenas de Costa Rica"></div>
+        </div>
+
+        <div class="facts">
+          <article class="fact">
+            <strong>Tema</strong>
+            <p>Ocho pueblos indígenas sobreviven actualmente en Costa Rica.</p>
+          </article>
+          <article class="fact">
+            <strong>Región clave</strong>
+            <p>Talamanca concentra una parte importante de estas comunidades.</p>
+          </article>
+          <article class="fact">
+            <strong>Cultura</strong>
+            <p>El cacao, la cerámica y las lenguas propias siguen siendo referentes culturales.</p>
+          </article>
+        </div>
+      </section>
+
+      <aside class="panel side">
+        <div class="legend">
+          <div class="legend-card">
+            <h2>Cómo usarlo</h2>
+            <div>Escribe una sola letra por casilla. Usa retroceso para volver y las flechas para desplazarte.</div>
+          </div>
+          <div class="legend-card">
+            <h2>Consejo</h2>
+            <div>Si una palabra no te sale, resuelve las que cruzan con ella para descubrir letras.</div>
+          </div>
+        </div>
+
+        <div class="clue-columns">
+          <section>
+            <h2>Horizontales</h2>
+            <ol class="clue-list" id="acrossClues"></ol>
+          </section>
+
+          <section>
+            <h2>Verticales</h2>
+            <ol class="clue-list" id="downClues"></ol>
+          </section>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const entries = [
+      {
+        answer: "CHOROTEGA",
+        clue: "Pueblo mesoamericano asentado históricamente en Guanacaste y Nicoya.",
+      },
+      {
+        answer: "TALAMANCA",
+        clue: "Cordillera y región del sur donde viven comunidades bribri y cabécar.",
+      },
+      {
+        answer: "BRIBRI",
+        clue: "Pueblo indígena numeroso de Costa Rica con idioma y religión propios.",
+      },
+      {
+        answer: "CABECAR",
+        clue: "Pueblo emparentado culturalmente con los bribri.",
+      },
+      {
+        answer: "MALEKU",
+        clue: "Pueblo indígena de la zona norte costarricense, antes llamado guatuso.",
+      },
+      {
+        answer: "BORUCA",
+        clue: "Pueblo del sur famoso por el juego de los diablitos y sus máscaras.",
+      },
+      {
+        answer: "HUETAR",
+        clue: "Etnia que fue muy influyente en la época precolombina del territorio central.",
+      },
+      {
+        answer: "CACAO",
+        clue: "Semilla con valor ritual y cultural para pueblos como el bribri y el cabécar.",
+      },
+      {
+        answer: "SIBU",
+        clue: "Dios creador en la cosmovisión bribri y cabécar.",
+      },
+      {
+        answer: "DIQUIS",
+        clue: "Cultura del sur vinculada históricamente con las famosas esferas de piedra.",
+      },
+    ];
+
+    const DIRECTIONS = {
+      across: { row: 0, col: 1 },
+      down: { row: 1, col: 0 },
+    };
+
+    const crosswordElement = document.getElementById("crossword");
+    const acrossCluesElement = document.getElementById("acrossClues");
+    const downCluesElement = document.getElementById("downClues");
+    const statusElement = document.getElementById("status");
+    const checkButton = document.getElementById("checkButton");
+    const clearButton = document.getElementById("clearButton");
+    const revealButton = document.getElementById("revealButton");
+
+    const normalizedEntries = entries.map((entry) => ({
+      ...entry,
+      answer: normalize(entry.answer),
+      length: normalize(entry.answer).length,
+    }));
+
+    const generated = buildBestCrossword(normalizedEntries);
+
+    if (!generated || generated.words.length < 6) {
+      statusElement.textContent = "No se pudo generar el crucigrama automáticamente.";
+      statusElement.className = "status bad";
+      throw new Error("No se pudo generar un crucigrama válido.");
+    }
+
+    const state = {
+      activeWordId: null,
+      activeDirection: "across",
+      cells: new Map(),
+      words: generated.words,
+      wordMap: new Map(),
+      wrongAttempts: 0,
+      revealUsed: false,
+    };
+
+    generated.words.forEach((word) => {
+      state.wordMap.set(word.id, word);
+    });
+
+    renderCrossword(generated);
+    renderClues();
+    updateRevealAvailability();
+    setStatus("Elige una pista para comenzar.");
+
+    checkButton.addEventListener("click", checkAnswers);
+    clearButton.addEventListener("click", clearAnswers);
+    revealButton.addEventListener("click", revealAnswers);
+
+    function normalize(value) {
+      return value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^A-Za-z]/g, "")
+        .toUpperCase();
+    }
+
+    function buildBestCrossword(wordList) {
+      const attempts = [];
+      const sorted = [...wordList].sort((first, second) => second.answer.length - first.answer.length);
+
+      for (const seed of sorted) {
+        for (const direction of ["across", "down"]) {
+          const attempt = attemptLayout(seed, direction, sorted);
+          if (attempt) {
+            attempts.push(attempt);
+          }
+        }
+      }
+
+      attempts.sort((first, second) => {
+        if (second.words.length !== first.words.length) {
+          return second.words.length - first.words.length;
+        }
+
+        return first.area - second.area;
+      });
+
+      return attempts[0] || null;
+    }
+
+    function attemptLayout(seedWord, seedDirection, sourceWords) {
+      const size = 29;
+      const grid = Array.from({ length: size }, () => Array(size).fill(null));
+      const placements = [];
+      const center = Math.floor(size / 2);
+      const seedRow = seedDirection === "across" ? center : center - Math.floor(seedWord.answer.length / 2);
+      const seedCol = seedDirection === "across" ? center - Math.floor(seedWord.answer.length / 2) : center;
+
+      const initialPlacement = {
+        ...seedWord,
+        row: seedRow,
+        col: seedCol,
+        direction: seedDirection,
+      };
+
+      if (!canPlaceWord(grid, initialPlacement)) {
+        return null;
+      }
+
+      commitWord(grid, initialPlacement);
+      placements.push(initialPlacement);
+
+      const pending = sourceWords.filter((word) => word.answer !== seedWord.answer);
+      let progress = true;
+
+      while (progress) {
+        progress = false;
+
+        for (let index = 0; index < pending.length; index += 1) {
+          const candidate = pending[index];
+          const placement = findBestPlacement(grid, placements, candidate, size);
+
+          if (placement) {
+            commitWord(grid, placement);
+            placements.push(placement);
+            pending.splice(index, 1);
+            index -= 1;
+            progress = true;
+          }
+        }
+      }
+
+      const trimmed = trimLayout(grid, placements);
+      if (!trimmed) {
+        return null;
+      }
+
+      numberWords(trimmed.words);
+      return trimmed;
+    }
+
+    function findBestPlacement(grid, placedWords, candidate, size) {
+      const options = [];
+
+      for (const placed of placedWords) {
+        for (let placedIndex = 0; placedIndex < placed.answer.length; placedIndex += 1) {
+          const placedChar = placed.answer[placedIndex];
+
+          for (let candidateIndex = 0; candidateIndex < candidate.answer.length; candidateIndex += 1) {
+            if (candidate.answer[candidateIndex] !== placedChar) {
+              continue;
+            }
+
+            const direction = placed.direction === "across" ? "down" : "across";
+            const row = placed.direction === "across"
+              ? placed.row - candidateIndex
+              : placed.row + placedIndex;
+            const col = placed.direction === "across"
+              ? placed.col + placedIndex
+              : placed.col - candidateIndex;
+
+            const placement = { ...candidate, row, col, direction };
+
+            if (!fitsInBounds(placement, size)) {
+              continue;
+            }
+
+            if (!canPlaceWord(grid, placement)) {
+              continue;
+            }
+
+            const score = scorePlacement(grid, placement, size);
+            options.push({ ...placement, score });
+          }
+        }
+      }
+
+      options.sort((first, second) => second.score - first.score);
+      return options[0] || null;
+    }
+
+    function fitsInBounds(word, size) {
+      const lastRow = word.row + (word.direction === "down" ? word.answer.length - 1 : 0);
+      const lastCol = word.col + (word.direction === "across" ? word.answer.length - 1 : 0);
+
+      return word.row >= 0 && word.col >= 0 && lastRow < size && lastCol < size;
+    }
+
+    function canPlaceWord(grid, word) {
+      const delta = DIRECTIONS[word.direction];
+      const previousRow = word.row - delta.row;
+      const previousCol = word.col - delta.col;
+      const nextRow = word.row + delta.row * word.answer.length;
+      const nextCol = word.col + delta.col * word.answer.length;
+
+      if (hasLetter(grid, previousRow, previousCol) || hasLetter(grid, nextRow, nextCol)) {
+        return false;
+      }
+
+      let overlaps = 0;
+
+      for (let index = 0; index < word.answer.length; index += 1) {
+        const row = word.row + delta.row * index;
+        const col = word.col + delta.col * index;
+        const existing = grid[row][col];
+        const letter = word.answer[index];
+
+        if (existing && existing.letter !== letter) {
+          return false;
+        }
+
+        if (word.direction === "across") {
+          if (!existing && (hasLetter(grid, row - 1, col) || hasLetter(grid, row + 1, col))) {
+            return false;
+          }
+        } else if (!existing && (hasLetter(grid, row, col - 1) || hasLetter(grid, row, col + 1))) {
+          return false;
+        }
+
+        if (existing) {
+          overlaps += 1;
+        }
+      }
+
+      return placementsCount(grid) === 0 || overlaps > 0;
+    }
+
+    function placementsCount(grid) {
+      let count = 0;
+      for (const row of grid) {
+        for (const cell of row) {
+          if (cell) {
+            count += 1;
+          }
+        }
+      }
+      return count;
+    }
+
+    function hasLetter(grid, row, col) {
+      return Boolean(grid[row] && grid[row][col]);
+    }
+
+    function commitWord(grid, word) {
+      const delta = DIRECTIONS[word.direction];
+
+      for (let index = 0; index < word.answer.length; index += 1) {
+        const row = word.row + delta.row * index;
+        const col = word.col + delta.col * index;
+        const letter = word.answer[index];
+        const existing = grid[row][col];
+
+        if (!existing) {
+          grid[row][col] = {
+            letter,
+            words: [word.answer],
+          };
+        } else if (!existing.words.includes(word.answer)) {
+          existing.words.push(word.answer);
+        }
+      }
+    }
+
+    function scorePlacement(grid, word, size) {
+      const delta = DIRECTIONS[word.direction];
+      let overlaps = 0;
+
+      for (let index = 0; index < word.answer.length; index += 1) {
+        const row = word.row + delta.row * index;
+        const col = word.col + delta.col * index;
+        if (grid[row][col]) {
+          overlaps += 1;
+        }
+      }
+
+      const center = Math.floor(size / 2);
+      const distance = Math.abs(word.row - center) + Math.abs(word.col - center);
+      return overlaps * 10 - distance;
+    }
+
+    function trimLayout(grid, placements) {
+      let minRow = Infinity;
+      let maxRow = -Infinity;
+      let minCol = Infinity;
+      let maxCol = -Infinity;
+
+      placements.forEach((placement) => {
+        minRow = Math.min(minRow, placement.row);
+        minCol = Math.min(minCol, placement.col);
+        maxRow = Math.max(maxRow, placement.row + (placement.direction === "down" ? placement.answer.length - 1 : 0));
+        maxCol = Math.max(maxCol, placement.col + (placement.direction === "across" ? placement.answer.length - 1 : 0));
+      });
+
+      if (!Number.isFinite(minRow)) {
+        return null;
+      }
+
+      const words = placements.map((placement, index) => ({
+        id: index,
+        ...placement,
+        row: placement.row - minRow,
+        col: placement.col - minCol,
+      }));
+
+      const rows = maxRow - minRow + 1;
+      const cols = maxCol - minCol + 1;
+
+      return {
+        rows,
+        cols,
+        area: rows * cols,
+        words,
+      };
+    }
+
+    function numberWords(words) {
+      const starts = new Map();
+      const ordered = [...words].sort((first, second) => {
+        if (first.row !== second.row) {
+          return first.row - second.row;
+        }
+        return first.col - second.col;
+      });
+
+      let counter = 1;
+      for (const word of ordered) {
+        const key = `${word.row}-${word.col}`;
+        if (!starts.has(key)) {
+          starts.set(key, counter);
+          counter += 1;
+        }
+        word.number = starts.get(key);
+      }
+    }
+
+    function renderCrossword(layout) {
+      const cellMap = new Map();
+      crosswordElement.style.gridTemplateColumns = `repeat(${layout.cols}, var(--cell-size))`;
+      crosswordElement.innerHTML = "";
+
+      for (let row = 0; row < layout.rows; row += 1) {
+        for (let col = 0; col < layout.cols; col += 1) {
+          const key = `${row}-${col}`;
+          const cellInfo = getCellInfo(row, col);
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.dataset.row = row;
+          cell.dataset.col = col;
+
+          if (!cellInfo) {
+            cell.classList.add("block");
+            crosswordElement.appendChild(cell);
+            continue;
+          }
+
+          if (cellInfo.number) {
+            const number = document.createElement("span");
+            number.className = "cell-number";
+            number.textContent = cellInfo.number;
+            cell.appendChild(number);
+          }
+
+          const input = document.createElement("input");
+          input.type = "text";
+          input.autocomplete = "off";
+          input.maxLength = 1;
+          input.inputMode = "text";
+          input.setAttribute("aria-label", `Fila ${row + 1}, columna ${col + 1}`);
+          input.dataset.row = row;
+          input.dataset.col = col;
+          input.dataset.solution = cellInfo.letter;
+          input.dataset.words = cellInfo.wordIds.join(",");
+
+          input.addEventListener("focus", () => handleCellFocus(row, col));
+          input.addEventListener("click", () => handleCellFocus(row, col));
+          input.addEventListener("input", (event) => handleInput(event, row, col));
+          input.addEventListener("keydown", (event) => handleKeydown(event, row, col));
+
+          cell.appendChild(input);
+          cellMap.set(key, { element: cell, input, ...cellInfo });
+          crosswordElement.appendChild(cell);
+        }
+      }
+
+      state.cells = cellMap;
+    }
+
+    function getCellInfo(row, col) {
+      const linkedWords = state.words.filter((word) => {
+        if (word.direction === "across") {
+          return word.row === row && col >= word.col && col < word.col + word.answer.length;
+        }
+        return word.col === col && row >= word.row && row < word.row + word.answer.length;
+      });
+
+      if (!linkedWords.length) {
+        return null;
+      }
+
+      const firstWord = linkedWords[0];
+      const letterIndex = firstWord.direction === "across" ? col - firstWord.col : row - firstWord.row;
+      const numberWord = state.words.find((word) => word.row === row && word.col === col);
+
+      return {
+        letter: firstWord.answer[letterIndex],
+        number: numberWord ? numberWord.number : "",
+        wordIds: linkedWords.map((word) => word.id),
+      };
+    }
+
+    function renderClues() {
+      acrossCluesElement.innerHTML = "";
+      downCluesElement.innerHTML = "";
+
+      const acrossWords = state.words.filter((word) => word.direction === "across").sort(byNumber);
+      const downWords = state.words.filter((word) => word.direction === "down").sort(byNumber);
+
+      acrossWords.forEach((word) => appendClue(word, acrossCluesElement));
+      downWords.forEach((word) => appendClue(word, downCluesElement));
+    }
+
+    function appendClue(word, container) {
+      const item = document.createElement("li");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.wordId = word.id;
+      button.innerHTML = `<strong>${word.number}. ${word.clue}</strong><span>${word.answer.length} letras</span>`;
+      button.addEventListener("click", () => activateWord(word.id, true));
+      item.appendChild(button);
+      container.appendChild(item);
+    }
+
+    function activateWord(wordId, focusFirstCell = false) {
+      const word = state.wordMap.get(wordId);
+      if (!word) {
+        return;
+      }
+
+      state.activeWordId = wordId;
+      state.activeDirection = word.direction;
+      updateHighlights();
+      setStatus(`${word.direction === "across" ? "Horizontal" : "Vertical"} ${word.number}: ${word.clue}`);
+
+      if (focusFirstCell) {
+        const firstCell = state.cells.get(`${word.row}-${word.col}`);
+        firstCell?.input.focus();
+      }
+    }
+
+    function handleCellFocus(row, col) {
+      const cell = state.cells.get(`${row}-${col}`);
+      if (!cell) {
+        return;
+      }
+
+      const preferredId = chooseWordForCell(cell.wordIds);
+      activateWord(preferredId, false);
+    }
+
+    function chooseWordForCell(wordIds) {
+      if (!wordIds.length) {
+        return null;
+      }
+
+      if (wordIds.includes(state.activeWordId)) {
+        return state.activeWordId;
+      }
+
+      const matchingDirection = wordIds.find((wordId) => state.wordMap.get(wordId).direction === state.activeDirection);
+      return matchingDirection ?? wordIds[0];
+    }
+
+    function handleInput(event, row, col) {
+      const value = normalize(event.target.value).slice(0, 1);
+      event.target.value = value;
+      clearValidationStyles();
+
+      if (value && value !== event.target.dataset.solution) {
+        state.wrongAttempts += 1;
+        updateRevealAvailability();
+      }
+
+      if (!value) {
+        return;
+      }
+
+      const word = getCurrentWord(row, col);
+      const next = getAdjacentCell(word, row, col, 1);
+      next?.input.focus();
+    }
+
+    function handleKeydown(event, row, col) {
+      const word = getCurrentWord(row, col);
+
+      if (event.key === "Backspace" && !event.target.value) {
+        const previous = getAdjacentCell(word, row, col, -1);
+        if (previous) {
+          previous.input.focus();
+        }
+        return;
+      }
+
+      if (event.key === " ") {
+        event.preventDefault();
+        toggleWordDirection(row, col);
+        return;
+      }
+
+      const arrows = {
+        ArrowUp: [-1, 0],
+        ArrowDown: [1, 0],
+        ArrowLeft: [0, -1],
+        ArrowRight: [0, 1],
+      };
+
+      if (arrows[event.key]) {
+        event.preventDefault();
+        const [deltaRow, deltaCol] = arrows[event.key];
+        focusCell(row + deltaRow, col + deltaCol);
+      }
+    }
+
+    function toggleWordDirection(row, col) {
+      const cell = state.cells.get(`${row}-${col}`);
+      if (!cell || cell.wordIds.length < 2) {
+        return;
+      }
+
+      const currentIndex = cell.wordIds.indexOf(state.activeWordId);
+      const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % cell.wordIds.length;
+      activateWord(cell.wordIds[nextIndex], false);
+    }
+
+    function getCurrentWord(row, col) {
+      const cell = state.cells.get(`${row}-${col}`);
+      const currentId = chooseWordForCell(cell ? cell.wordIds : []);
+      return state.wordMap.get(currentId);
+    }
+
+    function getAdjacentCell(word, row, col, directionStep) {
+      if (!word) {
+        return null;
+      }
+
+      const nextRow = row + DIRECTIONS[word.direction].row * directionStep;
+      const nextCol = col + DIRECTIONS[word.direction].col * directionStep;
+      return state.cells.get(`${nextRow}-${nextCol}`) || null;
+    }
+
+    function focusCell(row, col) {
+      state.cells.get(`${row}-${col}`)?.input.focus();
+    }
+
+    function updateHighlights() {
+      const activeWord = state.wordMap.get(state.activeWordId);
+
+      state.cells.forEach((cell) => {
+        cell.element.classList.remove("active", "related");
+        if (activeWord && cell.wordIds.includes(activeWord.id)) {
+          cell.element.classList.add("related");
+        }
+      });
+
+      if (activeWord) {
+        for (let index = 0; index < activeWord.answer.length; index += 1) {
+          const row = activeWord.row + DIRECTIONS[activeWord.direction].row * index;
+          const col = activeWord.col + DIRECTIONS[activeWord.direction].col * index;
+          const cell = state.cells.get(`${row}-${col}`);
+          cell?.element.classList.add("active");
+        }
+      }
+
+      document.querySelectorAll(".clue-list button").forEach((button) => {
+        button.classList.toggle("active", Number(button.dataset.wordId) === state.activeWordId);
+      });
+    }
+
+    function clearValidationStyles() {
+      statusElement.className = "status";
+      state.cells.forEach((cell) => {
+        cell.element.classList.remove("correct", "incorrect");
+      });
+    }
+
+    function checkAnswers() {
+      clearValidationStyles();
+      let filledCells = 0;
+      let correctCells = 0;
+
+      state.cells.forEach((cell) => {
+        const guess = normalize(cell.input.value);
+        if (guess) {
+          filledCells += 1;
+        }
+
+        if (guess === cell.letter) {
+          if (guess) {
+            cell.element.classList.add("correct");
+          }
+          correctCells += 1;
+        } else if (guess) {
+          cell.element.classList.add("incorrect");
+        }
+      });
+
+      if (filledCells === 0) {
+        setStatus("✍️ Todavía no has escrito letras.", "bad");
+        return;
+      }
+
+      if (correctCells === state.cells.size) {
+        if (state.revealUsed) {
+          setStatus("✅ Crucigrama completo y correcto. Buena práctica para reforzar conocimientos.", "ok");
+        } else {
+          setStatus("🏆 Excepcional: resolviste TODO el crucigrama sin usar ayudas. ¡Mega reconocimiento por tu esfuerzo, enfoque y participación! 🎉", "ok");
+        }
+        return;
+      }
+
+      if (correctCells >= 1) {
+        setStatus(`✅ Llevas ${correctCells} de ${state.cells.size} casillas correctas. ¡Vas bien! 😄`, "ok");
+      } else {
+        setStatus(`❌ Llevas ${correctCells} de ${state.cells.size} casillas correctas. ¡Sigue intentando! 💪`, "bad");
+      }
+    }
+
+    function clearAnswers() {
+      state.cells.forEach((cell) => {
+        cell.input.value = "";
+        cell.element.classList.remove("correct", "incorrect");
+      });
+
+      state.wrongAttempts = 0;
+      state.revealUsed = false;
+      state.activeWordId = null;
+      updateRevealAvailability();
+      updateHighlights();
+      setStatus("Crucigrama limpiado. Puedes comenzar otra vez.");
+    }
+
+    function revealAnswers() {
+      state.revealUsed = true;
+      state.cells.forEach((cell) => {
+        cell.input.value = cell.letter;
+        cell.element.classList.remove("incorrect");
+        cell.element.classList.add("correct");
+      });
+      setStatus("Se mostró la solución del crucigrama.", "ok");
+    }
+
+    function updateRevealAvailability() {
+      const isUnlocked = state.wrongAttempts >= 10;
+      revealButton.hidden = !isUnlocked;
+      revealButton.disabled = !isUnlocked;
+
+      if (isUnlocked && state.wrongAttempts === 10) {
+        setStatus("Desbloqueaste 'Mostrar solución' tras 10 intentos fallidos. Puedes seguir intentando o usar la ayuda.");
+      }
+    }
+
+    function setStatus(message, tone = "") {
+      statusElement.textContent = message;
+      statusElement.className = tone ? `status ${tone}` : "status";
+    }
+
+    function byNumber(first, second) {
+      return first.number - second.number;
+    }
+  </script>
+</body>
+</html>
