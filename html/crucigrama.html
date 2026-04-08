@@ -882,7 +882,7 @@
           input.addEventListener("keydown", (event) => handleKeydown(event, row, col));
 
           cell.appendChild(input);
-          cellMap.set(key, { element: cell, input, ...cellInfo });
+          cellMap.set(key, { row, col, element: cell, input, ...cellInfo });
           crosswordElement.appendChild(cell);
         }
       }
@@ -990,8 +990,7 @@
       }
 
       const word = getCurrentWord(row, col);
-      const next = getAdjacentCell(word, row, col, 1);
-      next?.input.focus();
+      focusNextWritableCell(word, row, col);
     }
 
     function handleKeydown(event, row, col) {
@@ -1050,6 +1049,26 @@
       const nextRow = row + DIRECTIONS[word.direction].row * directionStep;
       const nextCol = col + DIRECTIONS[word.direction].col * directionStep;
       return state.cells.get(`${nextRow}-${nextCol}`) || null;
+    }
+
+    function focusNextWritableCell(word, row, col) {
+      if (!word) {
+        return;
+      }
+
+      let nextCell = getAdjacentCell(word, row, col, 1);
+
+      while (nextCell) {
+        const currentValue = normalize(nextCell.input.value);
+        const isCorrectAndFilled = Boolean(currentValue) && currentValue === nextCell.letter;
+
+        if (!isCorrectAndFilled) {
+          nextCell.input.focus();
+          return;
+        }
+
+        nextCell = getAdjacentCell(word, nextCell.row, nextCell.col, 1);
+      }
     }
 
     function focusCell(row, col) {
