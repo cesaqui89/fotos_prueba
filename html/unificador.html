@@ -2,19 +2,14 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Unificador y Limpiador de Quiniela</title>
+    <title>Unificador, Limpiador y Enriquecedor de Quiniela</title>
     <style>
-        :root {
-            --primary: #3498db;
-            --success: #2ecc71;
-            --bg: #f4f6f8;
-            --dark: #2c3e50;
-        }
+        :root { --primary: #3498db; --success: #2ecc71; --bg: #f4f6f8; --dark: #2c3e50; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; padding: 40px; background: var(--bg); color: var(--dark); text-align: center; margin: 0; }
         .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .box { border: 2px dashed #bdc3c7; padding: 40px 20px; background: #fafbfc; border-radius: 8px; cursor: pointer; transition: all 0.3s; margin-bottom: 20px; }
         .box:hover { border-color: var(--primary); background: #f0f7fc; }
-        button { padding: 12px 24px; font-weight: bold; background: var(--success); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; box-shadow: 0 3px 6px rgba(46,204,113,0.2); }
+        button { padding: 12px 24px; font-weight: bold; background: var(--success); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; }
         button:hover { background: #27ae60; }
         #status { margin-top: 20px; font-weight: bold; color: #7f8c8d; }
         .log-area { text-align: left; background: #2c3e50; color: #a6e22e; font-family: monospace; padding: 15px; border-radius: 6px; margin-top: 20px; max-height: 200px; overflow-y: auto; font-size: 0.85rem; display: none; }
@@ -23,8 +18,8 @@
 <body>
 
 <div class="container">
-    <h2>📂 Unificador y Limpiador de Quiniela</h2>
-    <p style="color: #7f8c8d;">Selecciona tus 22 archivos <code>datos_*.js</code> para optimizarlos y unificarlos en un solo arreglo.</p>
+    <h2>📂 Unificador y Limpiador de Quiniela (Con Datos de Tooltip)</h2>
+    <p style="color: #7f8c8d;">Une tus archivos <code>datos_*.js</code> manteniendo los datos de los partidos, fechas y marcadores.</p>
     
     <div class="box" onclick="document.getElementById('files').click()">
         <span style="font-size: 2.5rem;">📥</span>
@@ -32,7 +27,7 @@
         <input type="file" id="files" multiple style="display:none" accept=".js">
     </div>
     
-    <button id="btn" style="display:none;" onclick="procesarYOptimizar()">⚡ Generar datosQuiniela.js Optimizado</button>
+    <button id="btn" style="display:none;" onclick="procesarYOptimizar()">⚡ Generar datosQuiniela.js Completo</button>
     
     <div id="status"></div>
     <div id="log" class="log-area"></div>
@@ -47,22 +42,18 @@
         archivosCargados = e.target.files;
         if(archivosCargados.length > 0) {
             document.getElementById('btn').style.display = 'inline-block';
-            statusDiv.innerHTML = `<span style="color:var(--primary)">${archivosCargados.length} archivos cargados listos para limpieza.</span>`;
+            statusDiv.innerHTML = `<span style="color:var(--primary)">${archivosCargados.length} archivos listos para enriquecer.</span>`;
         }
     });
 
     async function procesarYOptimizar() {
         let listaUsuariosUnificados = [];
         logDiv.style.display = 'block';
-        logDiv.innerHTML = "🧼 Iniciando depuración de propiedades...<br>";
+        logDiv.innerHTML = "🧼 Procesando y rescatando metadatos de partidos...<br>";
         
         for (let file of archivosCargados) {
-            // Extraer el nombre directamente del nombre del archivo: datos_Cesar_Sanchez.js -> Cesar_Sanchez
             const nombreUsuario = file.name.replace('datos_', '').replace('.js', '');
-            
             const textoOriginal = await file.text();
-            
-            // Remover el prefijo de asignación JS para extraer solo la cadena JSON pura
             const jsonTexto = textoOriginal.replace(/^const\s+quinielaData\s*=\s*/, '').replace(/;\s*$/, '');
             
             try {
@@ -73,48 +64,50 @@
 
                 if (objetoOriginal.games && Array.isArray(objetoOriginal.games)) {
                     objetoOriginal.games.forEach(game => {
-                        // Extraemos SOLO lo estrictamente necesario para la lógica y las visualizaciones
+                        // Rescatamos explícitamente el estado del juego, competidores y marcadores nativos (team1/team2)
                         juegosLimpios.push({
                             startTime: game.startTime,
-                            competitors: [
+                            competitors: game.competitors ? [
                                 { name: game.competitors[0].name },
                                 { name: game.competitors[1].name }
-                            ],
-                            scores: game.scores ? { team1: game.scores.team1, team2: game.scores.team2 } : null,
+                            ] : [],
+                            scores: game.scores ? { 
+                                team1: game.scores.team1, 
+                                team2: game.scores.team2 
+                            } : null,
                             gameBet: game.gameBet ? {
-                                selection: game.gameBet.selection ? { team1: game.gameBet.selection.team1, team2: game.gameBet.selection.team2 } : null,
+                                selection: game.gameBet.selection ? { 
+                                    team1: game.gameBet.selection.team1, 
+                                    team2: game.gameBet.selection.team2 
+                                } : null,
                                 gainedPoints: game.gameBet.gainedPoints
                             } : null
                         });
                     });
                 }
 
-                // Insertamos la propiedad usuario de primera de forma limpia y estilizada
                 listaUsuariosUnificados.push({
                     usuario: nombreUsuario,
                     games: juegosLimpios
                 });
 
-                logDiv.innerHTML += `✔️ Depurado y mapeado: <b>${nombreUsuario}</b><br>`;
+                logDiv.innerHTML += `✔️ Datos de partido preservados: <b>${nombreUsuario}</b><br>`;
                 logDiv.scrollTop = logDiv.scrollHeight;
 
             } catch(err) {
-                logDiv.innerHTML += `<span style="color:#e74c3c">❌ Error procesando el archivo: ${file.name}</span><br>`;
+                logDiv.innerHTML += `<span style="color:#e74c3c">❌ Error en: ${file.name}</span><br>`;
                 console.error(err);
             }
         }
 
-        // Convertir la colección consolidada a texto ejecutable JS
         const contenidoFinal = `const quinielaData = ${JSON.stringify(listaUsuariosUnificados, null, 4)};`;
-        
-        // Ejecutar descarga
         const blob = new Blob([contenidoFinal], {type: 'application/javascript;charset=utf-8'});
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = 'datosQuiniela.js';
         link.click();
         
-        statusDiv.innerHTML = `<span style="color:var(--success)">🎉 ¡Listo! Archivo optimizado descargado. Recuerda guardarlo en tu carpeta <b>resultados</b>.</span>`;
+        statusDiv.innerHTML = `<span style="color:var(--success)">🎉 ¡Hecho! Archivo unificado con metadatos de tooltip descargado. Muévelo a tu carpeta <b>resultados</b>.</span>`;
     }
 </script>
 </body>
