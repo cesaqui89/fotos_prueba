@@ -2,11 +2,11 @@
 <html lang="es" data-theme="dark">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Quiniela - TIS</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        /* Paletas de colores: Oscuro por defecto */
         :root {
             --bg-principal: #0f172a;
             --bg-card: #1e293b;
@@ -15,6 +15,7 @@
             --btn-bg: #334155;
             --btn-texto: #f8fafc;
             --primary: #3498db;
+            --accent: #2ecc71;
         }
 
         [data-theme="light"] {
@@ -35,7 +36,6 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* 📐 Ajustado al 100% del ancho de la pantalla */
         .dashboard-container {
             width: 100%;
             box-sizing: border-box;
@@ -54,6 +54,8 @@
             gap: 15px;
         }
 
+        .header-controls h2 { margin: 0; font-size: 1.5rem; }
+
         .controles-izquierda {
             display: flex;
             align-items: center;
@@ -70,9 +72,7 @@
             border-radius: 8px;
         }
         
-        [data-theme="light"] .selector-comparar {
-            background: rgba(0,0,0,0.03);
-        }
+        [data-theme="light"] .selector-comparar { background: rgba(0,0,0,0.03); }
 
         select {
             padding: 6px 12px;
@@ -90,6 +90,7 @@
             color: var(--btn-texto);
             font-weight: 600;
             cursor: pointer;
+            white-space: nowrap;
         }
         button:hover { opacity: 0.9; }
 
@@ -97,12 +98,13 @@
             width: 100%;
             overflow-x: auto;
             margin-top: 15px;
+            -webkit-overflow-scrolling: touch;
         }
 
         .chart-wrapper {
             position: relative;
-            min-width: 1200px;
-            height: 550px;
+            min-width: 1100px;
+            height: 500px;
         }
 
         .filtros-usuarios {
@@ -117,13 +119,40 @@
             overflow-y: auto;
         }
         
-        [data-theme="light"] .filtros-usuarios {
-            background: rgba(0,0,0,0.01);
+        [data-theme="light"] .filtros-usuarios { background: rgba(0,0,0,0.01); }
+
+        .filtros-usuarios button { font-size: 0.8rem; padding: 4px 8px; }
+
+        /* 📱 PANEL DE DETALLES PARA MÓVILES (Info Card) */
+        .mobile-details-card {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.04);
+            border-left: 4px solid var(--primary);
+            border-radius: 0 8px 8px 0;
+            display: block; /* Visible para servir como guía o feedback de toques */
+        }
+        
+        [data-theme="light"] .mobile-details-card {
+            background: rgba(0, 0, 0, 0.02);
         }
 
-        .filtros-usuarios button {
-            font-size: 0.8rem;
-            padding: 4px 8px;
+        .mobile-details-card h4 { margin: 0 0 8px 0; color: var(--primary); font-size: 1.1rem;}
+        .mobile-details-card p { margin: 5px 0; font-size: 0.95rem; line-height: 1.4; }
+        .hint-text { font-style: italic; color: #94a3b8; font-size: 0.85rem; }
+
+        @media (max-width: 768px) {
+            body { padding: 8px; }
+            .dashboard-container { padding: 12px; border-radius: 8px; }
+            .header-controls { flex-direction: column; align-items: stretch; gap: 12px; }
+            .header-controls h2 { text-align: center; font-size: 1.25rem; }
+            .controles-izquierda { flex-direction: column; align-items: stretch; width: 100%; gap: 8px; }
+            .controles-izquierda button { width: 100%; text-align: center; }
+            .selector-comparar { flex-direction: column; width: 100%; box-sizing: border-box; padding: 10px; gap: 8px; }
+            .selector-comparar select { width: 100%; }
+            #theme-toggle { width: 100%; }
+            .chart-wrapper { height: 380px; }
+            .filtros-usuarios { max-height: 140px; }
         }
     </style>
 </head>
@@ -137,9 +166,9 @@
             <button onclick="mostrarTodos()" style="background: var(--primary); color: white;">🌐 Ver Todos</button>
             
             <div class="selector-comparar">
-                👥 <b>Modo Versus:</b>
+                <span>👥 <b>Modo Versus:</b></span>
                 <select id="user1" onchange="actualizarModoVersus()"></select>
-                vs
+                <span>vs</span>
                 <select id="user2" onchange="actualizarModoVersus()"></select>
             </div>
         </div>
@@ -153,6 +182,13 @@
         <div class="chart-wrapper">
             <canvas id="quinielaChart"></canvas>
         </div>
+    </div>
+
+    <div class="mobile-details-card" id="panel-movil">
+        <h4>ℹ️ Visor de Partidos </h4>
+        <p id="txt-partido" class="hint-text">Toca cualquier punto o intersección en la gráfica para ver los detalles del partido aquí.</p>
+        <p id="txt-fecha"></p>
+        <p id="txt-detalles-usuarios"></p>
     </div>
 </div>
 
@@ -169,7 +205,6 @@
     function inicializarGrafico() {
         const ctx = document.getElementById('quinielaChart').getContext('2d');
         
-        // Ordenar alfabéticamente
         quinielaData.sort((a, b) => a.usuario.localeCompare(b.usuario));
         totalParticipantes = quinielaData.length;
 
@@ -192,9 +227,10 @@
                 borderColor: generarColor(idx),
                 backgroundColor: generarColor(idx),
                 borderWidth: 2,
-                pointRadius: 2,
+                pointRadius: 3, // Un poquito más grande para facilitar el toque en pantallas táctiles
+                hitRadius: 10,   // Área magnética extendida para que el dedo acierte con facilidad
                 tension: 0.1,
-                hidden: false // Visibles todos por defecto
+                hidden: false
             };
         });
 
@@ -207,6 +243,13 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                // Al hacer clic o tocar, disparamos la tarjeta alternativa de datos
+                onClick: (e, elementos) => {
+                    if (elementos.length > 0) {
+                        const indexPartido = elementos[0].index;
+                        actualizarPanelDetallesMovil(indexPartido);
+                    }
+                },
                 interaction: {
                     mode: 'nearest',
                     intersect: true
@@ -214,6 +257,7 @@
                 plugins: { 
                     legend: { display: false },
                     tooltip: {
+                        enabled: true, // Sigue funcionando en escritorio perfectamente
                         callbacks: {
                             title: function(context) {
                                 const indexPartido = context[0].dataIndex;
@@ -264,12 +308,65 @@
         generarBotonesFiltro();
     }
 
+    // 🛠️ FUNCIÓN MÁGICA PARA MÓVILES: Actualiza el contenedor estático de texto al tocar la gráfica
+    function actualizarPanelDetallesMovil(indexPartido) {
+        const juego = quinielaData[0].games[indexPartido];
+        if (!juego) return;
+
+        const local = juego.competitors[0].name;
+        const visita = juego.competitors[1].name;
+        const sHome = juego.scores ? juego.scores.team1 : '-';
+        const sAway = juego.scores ? juego.scores.team2 : '-';
+        
+        const fecha = new Date(juego.startTime).toLocaleDateString('es-CR', {
+            weekday: 'long', day: '2-digit', month: 'long', hour: '2-digit', minute:'2-digit'
+        });
+
+        // Título del encuentro
+        document.getElementById('txt-partido').innerHTML = `<b>⚽ Resultado Real:</b> ${local} <span style="color:var(--primary)">${sHome} - ${sAway}</span> ${visita}`;
+        document.getElementById('txt-partido').classList.remove('hint-text');
+        document.getElementById('txt-fecha').innerHTML = `<b>📅 Horario:</b> ${fecha}`;
+
+        // Extraer qué hicieron los usuarios activos/visibles en este momento en este partido
+        let htmlUsuarios = "<b>📊 Rendimiento de los Participantes en este partido:</b><br><ul style='margin:5px 0; padding-left:20px;'>";
+        
+        quinielaData.forEach((usuario) => {
+            const datasetDeGrafico = miGrafico.data.datasets.find(d => d.label === usuario.usuario.replace(/_/g, ' '));
+            
+            // Solo listamos los usuarios que están encendidos (visibles) en la gráfica
+            if (datasetDeGrafico && !datasetDeGrafico.hidden) {
+                const gameUser = usuario.games[indexPartido];
+                let prediccion = "No registró apuesta";
+                let ganados = 0;
+
+                if (gameUser && gameUser.gameBet) {
+                    ganados = gameUser.gameBet.gainedPoints;
+                    if (gameUser.gameBet.selection) {
+                        prediccion = `${gameUser.gameBet.selection.team1} - ${gameUser.gameBet.selection.team2}`;
+                    }
+                }
+                
+                // Calculamos los puntos que lleva acumulados justo hasta este partido
+                let acumuladosHastaAqui = 0;
+                for(let i = 0; i <= indexPartido; i++) {
+                    if (usuario.games[i] && usuario.games[i].gameBet) {
+                        acumuladosHastaAqui += usuario.games[i].gameBet.gainedPoints;
+                    }
+                }
+
+                htmlUsuarios += `<li style="margin-bottom:4px;"><b>${usuario.usuario.replace(/_/g, ' ')}</b>: Predijo <code>${prediccion}</code> | Ganó <span style="color:var(--accent)">+${ganados} pts</span> (Llegó a ${acumuladosHastaAqui} pts acumulados)</li>`;
+            }
+        });
+        
+        htmlUsuarios += "</ul>";
+        document.getElementById('txt-detalles-usuarios').innerHTML = htmlUsuarios;
+    }
+
     function poblarSelectores() {
         const s1 = document.getElementById('user1');
         const s2 = document.getElementById('user2');
         s1.innerHTML = ''; s2.innerHTML = ''; 
         
-        // 🛠️ Insertamos la opción Placeholder de primera en ambos selectores
         s1.options[s1.options.length] = new Option("Selecciona un usuario...", "");
         s2.options[s2.options.length] = new Option("Selecciona un usuario...", "");
         
@@ -279,7 +376,6 @@
             s2.options[s2.options.length] = new Option(nombre, idx);
         });
         
-        // Forzamos que por defecto apunten al Placeholder (índice 0)
         s1.selectedIndex = 0;
         s2.selectedIndex = 0;
     }
@@ -288,7 +384,6 @@
         const val1 = document.getElementById('user1').value;
         const val2 = document.getElementById('user2').value;
 
-        // 🛠️ VALIDACIÓN: Si cualquiera está en el placeholder (""), mostramos TODOS sin filtrar
         if (val1 === "" || val2 === "") {
             mostrarTodos();
             return;
@@ -306,7 +401,6 @@
     }
 
     function mostrarTodos() {
-        // Reseteamos también visualmente los selectores al placeholder si se usa el botón global
         if(miGrafico) {
             miGrafico.data.datasets.forEach(dataset => dataset.hidden = false);
             miGrafico.update();
@@ -314,7 +408,6 @@
         }
     }
 
-    // Nueva función auxiliar para resetear selectores externamente si fuera necesario
     function resetearSelectoresUI() {
         document.getElementById('user1').selectedIndex = 0;
         document.getElementById('user2').selectedIndex = 0;
@@ -334,8 +427,6 @@
                 miGrafico.data.datasets[idx].hidden = !miGrafico.data.datasets[idx].hidden;
                 miGrafico.update();
                 btn.style.opacity = miGrafico.data.datasets[idx].hidden ? '0.3' : '1';
-                
-                // Si alteran manualmente los botones de arriba, quitamos el Versus para evitar inconsistencias
                 resetearSelectoresUI();
             };
             contenedor.appendChild(btn);
