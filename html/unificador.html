@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Unificador de Archivos de Quiniela</title>
+    <style>
+        body { font-family: sans-serif; padding: 30px; background: #f4f6f8; text-align: center; }
+        .box { border: 2px dashed #ccc; padding: 40px; background: white; border-radius: 8px; cursor: pointer; }
+        button { padding: 10px 20px; font-weight: bold; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h2>📂 Unificador de Participantes (Navegador)</h2>
+    <p>Selecciona todos tus 22 archivos <code>datos_*.js</code> al mismo tiempo:</p>
+    <div class="box" onclick="document.getElementById('files').click()">
+        💥 Haz clic aquí para seleccionar los archivos
+        <input type="file" id="files" multiple style="display:none" accept=".js">
+    </div>
+    <button id="btn" style="display:none;" onclick="procesar()">⚡ Generar datosQuiniela.js unificado</button>
+    <div id="status" style="margin-top:20px; color: green; font-weight: bold;"></div>
+
+    <script>
+        let archivosCargados = [];
+        document.getElementById('files').addEventListener('change', function(e) {
+            archivosCargados = e.target.files;
+            if(archivosCargados.length > 0) {
+                document.getElementById('btn').style.display = 'inline-block';
+                document.getElementById('status').innerText = `${archivosCargados.length} archivos seleccionados.`;
+            }
+        });
+
+        async function procesar() {
+            let listaUsuarios = [];
+            
+            for (let file of archivosCargados) {
+                const nombreUsuario = file.name.replace('datos_', '').replace('.js', '');
+                const texto = await file.text();
+                
+                // Extraer el JSON dentro del string "const quinielaData = ..."
+                const jsonTexto = texto.replace(/^const\s+quinielaData\s*=\s*/, '').replace(/;\s*$/, '');
+                try {
+                    let objeto = JSON.parse(jsonTexto);
+                    if (Array.isArray(objeto)) objeto = objeto[0];
+                    
+                    listaUsuarios.push({
+                        usuario: nombreUsuario,
+                        games: objeto.games
+                    });
+                } catch(e) {
+                    console.error("Error en archivo: " + file.name);
+                }
+            }
+
+            // Crear el blob de descarga masiva
+            const contenidoFinal = `const quinielaData = ${JSON.stringify(listaUsuarios, null, 4)};`;
+            const blob = new Blob([contenidoFinal], {type: 'application/javascript'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'datosQuiniela.js';
+            link.click();
+            document.getElementById('status').innerText = "¡Descargado! Ahora muévelo a tu carpeta 'resultados'.";
+        }
+    </script>
+</body>
+</html>
