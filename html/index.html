@@ -2,212 +2,287 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resultados de la Quiniela - Puntos Acumulados</title>
+    <title>Dashboard de Quiniela - Rendimiento</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-    <script src="./datosQuiniela.js"></script>
+    
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --bg-color: #f4f6f8;
-            --card-bg: #ffffff;
+            --bg-principal: #f4f6f8;
+            --bg-card: #ffffff;
+            --texto: #2c3e50;
+            --borde-grafico: rgba(0,0,0,0.1);
+            --btn-bg: #e2e8f0;
+            --btn-texto: #1a202c;
+            --primary: #3498db;
         }
-        
-        * {
-            box-sizing: border-box;
+
+        [data-theme="dark"] {
+            --bg-principal: #0f172a;
+            --bg-card: #1e293b;
+            --texto: #f8fafc;
+            --borde-grafico: rgba(255,255,255,0.1);
+            --btn-bg: #334155;
+            --btn-texto: #f8fafc;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--primary-color);
+            background-color: var(--bg-principal);
+            color: var(--texto);
+            font-family: 'Segoe UI', system-ui, sans-serif;
             margin: 0;
-            padding: 0;
-            width: 100vw;
-            overflow-x: hidden;
-        }
-
-        /* Contenedor estirado al 100% del ancho de la pantalla */
-        .container-fluid {
-            width: 100%;
             padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        header {
-            text-align: center;
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
-        h1 { 
-            margin: 0 0 5px 0; 
-            font-size: 1.8rem;
+        .selector-comparar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: rgba(0,0,0,0.03);
+            padding: 10px 15px;
+            border-radius: 8px;
         }
 
-        .subtitle { 
-            color: #7f8c8d; 
-            margin: 0;
-            font-size: 1rem;
+        select {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            background: var(--bg-card);
+            color: var(--texto);
         }
 
-        .card { 
-            background-color: var(--card-bg); 
-            border-radius: 8px; 
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); 
-            padding: 20px; 
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--btn-bg);
+            color: var(--btn-texto);
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:hover { opacity: 0.9; }
+
+        .chart-scroll-container {
             width: 100%;
+            overflow-x: auto;
+            margin-top: 15px;
         }
 
-        /* Ajuste del contenedor del gráfico para ocupar todo el espacio disponible */
-        .chart-container { 
-            position: relative; 
-            height: calc(100vh - 160px); /* Ajuste dinámico según la pantalla */
-            min-height: 500px;
-            width: 100%; 
+        .chart-wrapper {
+            position: relative;
+            min-width: 1100px; 
+            height: 500px;
+        }
+
+        .filtros-usuarios {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(0,0,0,0.01);
+            border-radius: 8px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .filtros-usuarios button {
+            font-size: 0.85rem;
+            padding: 4px 10px;
         }
     </style>
 </head>
 <body>
 
-<div class="container-fluid">
-    <header>
-        <h1>Tendencia de Rendimiento - Quiniela</h1>
-        <p class="subtitle">Evolución de puntos acumulados de forma progresiva por jornada</p>
-    </header>
+<div class="dashboard-container">
+    <div class="header-controls">
+        <h2>📈 Evolución de Puntos Acumulados</h2>
+        
+        <div class="selector-comparar">
+            👥 <b>Modo Versus:</b>
+            <select id="user1" onchange="actualizarModoVersus()"></select>
+            vs
+            <select id="user2" onchange="actualizarModoVersus()"></select>
+            <button onclick="mostrarTodos()" style="margin-left: 10px; background: var(--primary); color: white;">🌐 Ver Todos</button>
+        </div>
 
-    <div class="card">
-        <div class="chart-container">
+        <button id="theme-toggle" onclick="toggleTema()">🌓 Tema</button>
+    </div>
+
+    <div class="filtros-usuarios" id="zona-filtros"></div>
+
+    <div class="chart-scroll-container">
+        <div class="chart-wrapper">
             <canvas id="quinielaChart"></canvas>
         </div>
     </div>
 </div>
 
+<script src="resultados/datosQuiniela.js"></script>
+
 <script>
-    // Paleta de colores para diferenciar las líneas de cada usuario de forma automática
-    const coloresLineas = [
-        { border: '#3498db', bg: 'rgba(52, 152, 219, 0.1)' },
-        { border: '#e74c3c', bg: 'rgba(231, 76, 60, 0.1)' },
-        { border: '#2ecc71', bg: 'rgba(46, 204, 113, 0.1)' },
-        { border: '#f1c40f', bg: 'rgba(241, 196, 15, 0.1)' },
-        { border: '#9b59b6', bg: 'rgba(155, 89, 182, 0.1)' },
-        { border: '#e67e22', bg: 'rgba(230, 126, 34, 0.1)' }
-    ];
-
-    function procesarYRenderizar() {
-        if (typeof quinielaData === 'undefined') {
-            console.error("No se encontraron los datos en datosQuiniela.js");
-            return;
-        }
-
-        const usuarios = Array.isArray(quinielaData) ? quinielaData : [quinielaData];
-        let datasets = [];
-
-        usuarios.forEach((userNode, index) => {
-            const nombreUsuario = userNode.usuario || "Usuario Anónimo";
-            let datosUsuario = [];
-
-            if (userNode.games && Array.isArray(userNode.games)) {
-                // Filtrar partidos válidos que ya tienen puntos asignados
-                const partidosValidos = userNode.games.filter(g => g.gameBet && g.gameBet.gainedPoints !== null);
-                
-                // IMPORTANTE: Ordenar cronológicamente para que el acumulado sume correctamente en el tiempo
-                partidosValidos.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-
-                let acumulado = 0; // Variable para controlar la suma total
-
-                partidosValidos.forEach(game => {
-                    const puntosDelPartido = game.gameBet.gainedPoints;
-                    acumulado += puntosDelPartido; // Sumamos progresivamente los puntos
-                    
-                    const matchName = `${game.competitors[0].name} vs ${game.competitors[1].name}`;
-
-                    datosUsuario.push({
-                        x: new Date(game.startTime), // Eje X: Fecha de la jornada
-                        y: acumulado,                // Eje Y: Puntos ACUMULADOS hasta este partido
-                        match: matchName,            // Metadata para el tooltip
-                        puntosPartido: puntosDelPartido,
-                        usuario: nombreUsuario
-                    });
-                });
-            }
-
-            const color = coloresLineas[index % coloresLineas.length];
-
-            datasets.push({
-                label: nombreUsuario,
-                data: datosUsuario,
-                borderColor: color.border,
-                backgroundColor: color.bg,
-                borderWidth: 3,
-                tension: 0.1, // Líneas ligeramente curvas para seguir la tendencia de forma fluida
-                pointRadius: 5,
-                pointHoverRadius: 9,
-                showLine: true
-            });
-        });
-
-        inicializarGraficoLineas(datasets);
+    let miGrafico;
+    const totalParticipantes = quinielaData.length;
+    
+    function generarColor(index) {
+        return `hsla(${(index * 360 / totalParticipantes)}, 72%, 52%, 1)`;
     }
 
-    function inicializarGraficoLineas(datasets) {
+    function inicializarGrafico() {
         const ctx = document.getElementById('quinielaChart').getContext('2d');
         
-        new Chart(ctx, {
+        // Buscamos la mayor cantidad de partidos de referencia general
+        const partidosBase = quinielaData[0].games;
+        const labels = partidosBase.map((_, idx) => `P${idx + 1}`);
+
+        // Procesar datasets omitiendo nulos y acumulando
+        const datasets = quinielaData.map((participante, idx) => {
+            let puntosAcumulados = 0;
+            
+            const dataProgresiva = participante.games.map(game => {
+                // Validación Crítica: Si no hay apuesta (gameBet es null), mantiene el puntaje previo
+                // y Chart.js pintará una línea continua sin caídas a cero ni interrupciones extrañas.
+                if (game.gameBet !== null && game.gameBet !== undefined) {
+                    puntosAcumulados += game.gameBet.gainedPoints;
+                }
+                return puntosAcumulados;
+            });
+
+            const color = generarColor(idx);
+
+            return {
+                label: participante.usuario.replace(/_/g, ' '),
+                data: dataProgresiva,
+                borderColor: color,
+                backgroundColor: color,
+                borderWidth: 2,
+                pointRadius: 1,
+                tension: 0.1,
+                hidden: true // POR DEFECTO TODOS OCULTOS para proteger los ánimos del grupo
+            };
+        });
+
+        const esOscuro = document.documentElement.getAttribute('data-theme') === 'dark';
+        const colorTexto = esOscuro ? '#f8fafc' : '#2c3e50';
+        const colorRejilla = esOscuro ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+
+        miGrafico = new Chart(ctx, {
             type: 'line',
-            data: {
-                datasets: datasets
-            },
+            data: { labels, datasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
                 scales: {
-                    x: {
-                        type: 'time',
-                        time: {
-                            unit: 'day',
-                            displayFormats: { day: 'dd MMM' }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Línea de Tiempo (Jornadas)',
-                            font: { size: 14, weight: 'bold' }
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Puntos Acumulados Totales',
-                            font: { size: 14, weight: 'bold' }
-                        }
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const dataObj = context.raw;
-                                return [
-                                    `Usuario: ${dataObj.usuario}`,
-                                    `Partido: ${dataObj.match}`,
-                                    `Puntos en este partido: +${dataObj.puntosPartido} pts`,
-                                    `Total Acumulado: ${dataObj.y} pts`,
-                                    `Fecha: ${dataObj.x.toLocaleDateString()} ${dataObj.x.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`
-                                ];
-                            }
-                        }
-                    },
-                    legend: {
-                        position: 'top',
-                        labels: { font: { size: 12, weight: 'bold' } }
-                    }
+                    x: { grid: { color: colorRejilla }, ticks: { color: colorTexto } },
+                    y: { grid: { color: colorRejilla }, ticks: { color: colorTexto } }
                 }
             }
         });
+
+        poblarSelectores();
+        generarBotonesFiltro();
+        
+        // Inicializar mostrando una comparativa por defecto de los dos primeros de la lista
+        document.getElementById('user1').selectedIndex = 0;
+        document.getElementById('user2').selectedIndex = 1;
+        actualizarModoVersus();
     }
 
-    procesarYRenderizar();
-</script>
+    // Llena las cajas de selección dinámicamente con los 28 nombres
+    function poblarSelectores() {
+        const s1 = document.getElementById('user1');
+        const s2 = document.getElementById('user2');
+        
+        quinielaData.forEach((p, idx) => {
+            const nombre = p.usuario.replace(/_/g, ' ');
+            s1.options[s1.options.length] = new Option(nombre, idx);
+            s2.options[s2.options.length] = new Option(nombre, idx);
+        });
+    }
 
+    // Lógica del modo Versus (Oculta todo y enciende solo los dos seleccionados)
+    function actualizarModoVersus() {
+        const u1Index = parseInt(document.getElementById('user1').value);
+        const u2Index = parseInt(document.getElementById('user2').value);
+
+        miGrafico.data.datasets.forEach((dataset, idx) => {
+            dataset.hidden = !(idx === u1Index || idx === u2Index);
+        });
+
+        miGrafico.update();
+        sincronizarOpacidadBotones();
+    }
+
+    // Activa de golpe la visualización masiva
+    function mostrarTodos() {
+        miGrafico.data.datasets.forEach(dataset => dataset.hidden = false);
+        miGrafico.update();
+        sincronizarOpacidadBotones();
+    }
+
+    // Genera botones individuales pequeños por si quieren añadir un 3er o 4to participante manual
+    function generarBotonesFiltro() {
+        const contenedor = document.getElementById('zona-filtros');
+        contenedor.innerHTML = '';
+
+        miGrafico.data.datasets.forEach((dataset, idx) => {
+            const btn = document.createElement('button');
+            btn.innerText = dataset.label;
+            btn.id = `btn-user-${idx}`;
+            btn.style.borderLeft = `4px solid ${dataset.borderColor}`;
+            
+            btn.onclick = () => {
+                miGrafico.data.datasets[idx].hidden = !miGrafico.data.datasets[idx].hidden;
+                miGrafico.update();
+                btn.style.opacity = miGrafico.data.datasets[idx].hidden ? '0.3' : '1';
+            };
+            contenedor.appendChild(btn);
+        });
+    }
+
+    function sincronizarOpacidadBotones() {
+        miGrafico.data.datasets.forEach((dataset, idx) => {
+            const btn = document.getElementById(`btn-user-${idx}`);
+            if (btn) btn.style.opacity = dataset.hidden ? '0.3' : '1';
+        });
+    }
+
+    function toggleTema() {
+        const html = document.documentElement;
+        const nuevoTema = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', nuevoTema);
+
+        const esOscuro = nuevoTema === 'dark';
+        const colorTexto = esOscuro ? '#f8fafc' : '#2c3e50';
+        const colorRejilla = esOscuro ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+
+        miGrafico.options.scales.x.ticks.color = colorTexto;
+        miGrafico.options.scales.x.grid.color = colorRejilla;
+        miGrafico.options.scales.y.ticks.color = colorTexto;
+        miGrafico.options.scales.y.grid.color = colorRejilla;
+        miGrafico.update();
+    }
+
+    window.onload = inicializarGrafico;
+</script>
 </body>
 </html>
