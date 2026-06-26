@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados de la Quiniela - Puntos Acumulados</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="./datosQuiniela.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            overflow-x: hidden;
+        }
+
+        /* Contenedor estirado al 100% del ancho de la pantalla */
+        .container-fluid {
+            width: 100%;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 { 
+            margin: 0 0 5px 0; 
+            font-size: 1.8rem;
+        }
+
+        .subtitle { 
+            color: #7f8c8d; 
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .card { 
+            background-color: var(--card-bg); 
+            border-radius: 8px; 
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); 
+            padding: 20px; 
+            width: 100%;
+        }
+
+        /* Ajuste del contenedor del gráfico para ocupar todo el espacio disponible */
+        .chart-container { 
+            position: relative; 
+            height: calc(100vh - 160px); /* Ajuste dinámico según la pantalla */
+            min-height: 500px;
+            width: 100%; 
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <header>
+        <h1>Tendencia de Rendimiento - Quiniela</h1>
+        <p class="subtitle">Evolución de puntos acumulados de forma progresiva por jornada</p>
+    </header>
+
+    <div class="card">
+        <div class="chart-container">
+            <canvas id="quinielaChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Paleta de colores para diferenciar las líneas de cada usuario de forma automática
+    const coloresLineas = [
+        { border: '#3498db', bg: 'rgba(52, 152, 219, 0.1)' },
+        { border: '#e74c3c', bg: 'rgba(231, 76, 60, 0.1)' },
+        { border: '#2ecc71', bg: 'rgba(46, 204, 113, 0.1)' },
+        { border: '#f1c40f', bg: 'rgba(241, 196, 15, 0.1)' },
+        { border: '#9b59b6', bg: 'rgba(155, 89, 182, 0.1)' },
+        { border: '#e67e22', bg: 'rgba(230, 126, 34, 0.1)' }
+    ];
+
+    function procesarYRenderizar() {
+        if (typeof quinielaData === 'undefined') {
+            console.error("No se encontraron los datos en datosQuiniela.js");
+            return;
+        }
+
+        const usuarios = Array.isArray(quinielaData) ? quinielaData : [quinielaData];
+        let datasets = [];
+
+        usuarios.forEach((userNode, index) => {
+            const nombreUsuario = userNode.usuario || "Usuario Anónimo";
+            let datosUsuario = [];
+
+            if (userNode.games && Array.isArray(userNode.games)) {
+                // Filtrar partidos válidos que ya tienen puntos asignados
+                const partidosValidos = userNode.games.filter(g => g.gameBet && g.gameBet.gainedPoints !== null);
+                
+                // IMPORTANTE: Ordenar cronológicamente para que el acumulado sume correctamente en el tiempo
+                partidosValidos.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+
+                let acumulado = 0; // Variable para controlar la suma total
+
+                partidosValidos.forEach(game => {
+                    const puntosDelPartido = game.gameBet.gainedPoints;
+                    acumulado += puntosDelPartido; // Sumamos progresivamente los puntos
+                    
+                    const matchName = `${game.competitors[0].name} vs ${game.competitors[1].name}`;
+
+                    datosUsuario.push({
+                        x: new Date(game.startTime), // Eje X: Fecha de la jornada
+                        y: acumulado,                // Eje Y: Puntos ACUMULADOS hasta este partido
+                        match: matchName,            // Metadata para el tooltip
+                        puntosPartido: puntosDelPartido,
+                        usuario: nombreUsuario
+                    });
+                });
+            }
+
+            const color = coloresLineas[index % coloresLineas.length];
+
+            datasets.push({
+                label: nombreUsuario,
+                data: datosUsuario,
+                borderColor: color.border,
+                backgroundColor: color.bg,
+                borderWidth: 3,
+                tension: 0.1, // Líneas ligeramente curvas para seguir la tendencia de forma fluida
+                pointRadius: 5,
+                pointHoverRadius: 9,
+                showLine: true
+            });
+        });
+
+        inicializarGraficoLineas(datasets);
+    }
+
+    function inicializarGraficoLineas(datasets) {
+        const ctx = document.getElementById('quinielaChart').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'day',
+                            displayFormats: { day: 'dd MMM' }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Línea de Tiempo (Jornadas)',
+                            font: { size: 14, weight: 'bold' }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Puntos Acumulados Totales',
+                            font: { size: 14, weight: 'bold' }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const dataObj = context.raw;
+                                return [
+                                    `Usuario: ${dataObj.usuario}`,
+                                    `Partido: ${dataObj.match}`,
+                                    `Puntos en este partido: +${dataObj.puntosPartido} pts`,
+                                    `Total Acumulado: ${dataObj.y} pts`,
+                                    `Fecha: ${dataObj.x.toLocaleDateString()} ${dataObj.x.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`
+                                ];
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: { font: { size: 12, weight: 'bold' } }
+                    }
+                }
+            }
+        });
+    }
+
+    procesarYRenderizar();
+</script>
+
+</body>
+</html>
