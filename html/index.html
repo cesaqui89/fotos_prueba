@@ -6,7 +6,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        /* Paletas de colores invertidas: Oscuro por defecto */
+        /* Paletas de colores: Oscuro por defecto */
         :root {
             --bg-principal: #0f172a;
             --bg-card: #1e293b;
@@ -101,7 +101,7 @@
 
         .chart-wrapper {
             position: relative;
-            min-width: 1200px; /* Le damos suficiente espacio horizontal a los partidos */
+            min-width: 1200px;
             height: 550px;
         }
 
@@ -169,14 +169,13 @@
     function inicializarGrafico() {
         const ctx = document.getElementById('quinielaChart').getContext('2d');
         
-        // 🔤 1. Ordenar los usuarios alfabéticamente antes de graficar
+        // Ordenar alfabéticamente
         quinielaData.sort((a, b) => a.usuario.localeCompare(b.usuario));
         totalParticipantes = quinielaData.length;
 
         const partidosBase = quinielaData[0].games;
         const labels = partidosBase.map((_, idx) => `P${idx + 1}`);
 
-        // 2. Construcción de los conjuntos de datos
         const datasets = quinielaData.map((participante, idx) => {
             let puntosAcumulados = 0;
             
@@ -195,11 +194,10 @@
                 borderWidth: 2,
                 pointRadius: 2,
                 tension: 0.1,
-                hidden: false // ✔️ Visibles TODOS por defecto
+                hidden: false // Visibles todos por defecto
             };
         });
 
-        // 3. Colores iniciales basados en el Tema Oscuro por defecto
         const colorTexto = '#f8fafc';
         const colorRejilla = 'rgba(255,255,255,0.1)';
 
@@ -210,8 +208,8 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 interaction: {
-                    mode: 'nearest',   // 🎯 Busca el punto más cercano en lugar de toda la columna
-                    intersect: true    // 🛑 El cursor DEBE estar exactamente encima del nodo para abrir el tooltip
+                    mode: 'nearest',
+                    intersect: true
                 },
                 plugins: { 
                     legend: { display: false },
@@ -269,7 +267,11 @@
     function poblarSelectores() {
         const s1 = document.getElementById('user1');
         const s2 = document.getElementById('user2');
-        s1.innerHTML = ''; s2.innerHTML = ''; // Limpiar cargas previas
+        s1.innerHTML = ''; s2.innerHTML = ''; 
+        
+        // 🛠️ Insertamos la opción Placeholder de primera en ambos selectores
+        s1.options[s1.options.length] = new Option("Selecciona un usuario...", "");
+        s2.options[s2.options.length] = new Option("Selecciona un usuario...", "");
         
         quinielaData.forEach((p, idx) => {
             const nombre = p.usuario.replace(/_/g, ' ');
@@ -277,14 +279,23 @@
             s2.options[s2.options.length] = new Option(nombre, idx);
         });
         
-        // Inicializar el select de versus con los dos primeros alfabéticamente
+        // Forzamos que por defecto apunten al Placeholder (índice 0)
         s1.selectedIndex = 0;
-        s2.selectedIndex = 1;
+        s2.selectedIndex = 0;
     }
 
     function actualizarModoVersus() {
-        const u1Index = parseInt(document.getElementById('user1').value);
-        const u2Index = parseInt(document.getElementById('user2').value);
+        const val1 = document.getElementById('user1').value;
+        const val2 = document.getElementById('user2').value;
+
+        // 🛠️ VALIDACIÓN: Si cualquiera está en el placeholder (""), mostramos TODOS sin filtrar
+        if (val1 === "" || val2 === "") {
+            mostrarTodos();
+            return;
+        }
+
+        const u1Index = parseInt(val1);
+        const u2Index = parseInt(val2);
 
         miGrafico.data.datasets.forEach((dataset, idx) => {
             dataset.hidden = !(idx === u1Index || idx === u2Index);
@@ -295,9 +306,18 @@
     }
 
     function mostrarTodos() {
-        miGrafico.data.datasets.forEach(dataset => dataset.hidden = false);
-        miGrafico.update();
-        sincronizarOpacidadBotones();
+        // Reseteamos también visualmente los selectores al placeholder si se usa el botón global
+        if(miGrafico) {
+            miGrafico.data.datasets.forEach(dataset => dataset.hidden = false);
+            miGrafico.update();
+            sincronizarOpacidadBotones();
+        }
+    }
+
+    // Nueva función auxiliar para resetear selectores externamente si fuera necesario
+    function resetearSelectoresUI() {
+        document.getElementById('user1').selectedIndex = 0;
+        document.getElementById('user2').selectedIndex = 0;
     }
 
     function generarBotonesFiltro() {
@@ -314,6 +334,9 @@
                 miGrafico.data.datasets[idx].hidden = !miGrafico.data.datasets[idx].hidden;
                 miGrafico.update();
                 btn.style.opacity = miGrafico.data.datasets[idx].hidden ? '0.3' : '1';
+                
+                // Si alteran manualmente los botones de arriba, quitamos el Versus para evitar inconsistencias
+                resetearSelectoresUI();
             };
             contenedor.appendChild(btn);
         });
