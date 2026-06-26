@@ -6,16 +6,17 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
+        /* Variables para el cambio de Tema (Claro por defecto) */
         :root {
             --bg-principal: #f4f6f8;
             --bg-card: #ffffff;
             --texto: #2c3e50;
-            --borde-grafico: rgba(0,0,0,0.1);
+            --borde-grafico: #rgba(0,0,0,0.1);
             --btn-bg: #e2e8f0;
             --btn-texto: #1a202c;
-            --primary: #3498db;
         }
 
+        /* Variables para Tema Oscuro */
         [data-theme="dark"] {
             --bg-principal: #0f172a;
             --bg-card: #1e293b;
@@ -49,24 +50,7 @@
             align-items: center;
             margin-bottom: 20px;
             flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .selector-comparar {
-            display: flex;
             gap: 10px;
-            align-items: center;
-            background: rgba(0,0,0,0.03);
-            padding: 10px 15px;
-            border-radius: 8px;
-        }
-
-        select {
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: 1px solid #cbd5e1;
-            background: var(--bg-card);
-            color: var(--texto);
         }
 
         button {
@@ -75,20 +59,23 @@
             border-radius: 6px;
             background-color: var(--btn-bg);
             color: var(--btn-texto);
-            font-weight: 600;
+            font-weight: 6px;
             cursor: pointer;
+            transition: opacity 0.2s;
         }
         button:hover { opacity: 0.9; }
 
+        /* Contenedor con Scroll para mitigar la saturación de datos */
         .chart-scroll-container {
             width: 100%;
-            overflow-x: auto;
+            overflow-x: auto; /* Permite scroll horizontal si el gráfico es muy ancho */
             margin-top: 15px;
         }
 
         .chart-wrapper {
             position: relative;
-            min-width: 1100px; 
+            /* Si tienes muchos partidos (ej: 60), forzamos un ancho mínimo para que respire la info */
+            min-width: 1000px; 
             height: 500px;
         }
 
@@ -98,15 +85,8 @@
             flex-wrap: wrap;
             margin-bottom: 15px;
             padding: 10px;
-            background: rgba(0,0,0,0.01);
+            background: rgba(0,0,0,0.02);
             border-radius: 8px;
-            max-height: 120px;
-            overflow-y: auto;
-        }
-
-        .filtros-usuarios button {
-            font-size: 0.85rem;
-            padding: 4px 10px;
         }
     </style>
 </head>
@@ -115,16 +95,11 @@
 <div class="dashboard-container">
     <div class="header-controls">
         <h2>📈 Evolución de Puntos Acumulados</h2>
-        
-        <div class="selector-comparar">
-            👥 <b>Modo Versus:</b>
-            <select id="user1" onchange="actualizarModoVersus()"></select>
-            vs
-            <select id="user2" onchange="actualizarModoVersus()"></select>
-            <button onclick="mostrarTodos()" style="margin-left: 10px; background: var(--primary); color: white;">🌐 Ver Todos</button>
+        <div>
+            <button onclick="mostrarModo('todos')">Mostrar Todos</button>
+            <button onclick="mostrarModo('ninguno')">Ocultar Todos</button>
+            <button id="theme-toggle" onclick="toggleTema()" style="background: #3498db; color: white;">🌓 Cambiar Tema</button>
         </div>
-
-        <button id="theme-toggle" onclick="toggleTema()">🌓 Tema</button>
     </div>
 
     <div class="filtros-usuarios" id="zona-filtros"></div>
@@ -140,46 +115,44 @@
 
 <script>
     let miGrafico;
-    const totalParticipantes = quinielaData.length;
     
+    // Generar una paleta de colores dinámica para los 28 participantes
     function generarColor(index) {
-        return `hsla(${(index * 360 / totalParticipantes)}, 72%, 52%, 1)`;
+        return `hsla(${(index * 360 / 28)}, 70%, 55%, 1)`;
     }
 
     function inicializarGrafico() {
         const ctx = document.getElementById('quinielaChart').getContext('2d');
         
-        // Buscamos la mayor cantidad de partidos de referencia general
+        // 1. Extraer las etiquetas de los ejes (Partidos o Fechas)
+        // Usamos los partidos del primer participante como base de la línea de tiempo
         const partidosBase = quinielaData[0].games;
-        const labels = partidosBase.map((_, idx) => `P${idx + 1}`);
+        const labels = partidosBase.map((g, idx) => `P${idx + 1}`); // P1, P2, P3...
 
-        // Procesar datasets omitiendo nulos y acumulando
+        // 2. Procesar los datasets calculando los puntos acumulados de forma progresiva
         const datasets = quinielaData.map((participante, idx) => {
             let puntosAcumulados = 0;
-            
             const dataProgresiva = participante.games.map(game => {
-                // Validación Crítica: Si no hay apuesta (gameBet es null), mantiene el puntaje previo
-                // y Chart.js pintará una línea continua sin caídas a cero ni interrupciones extrañas.
-                if (game.gameBet !== null && game.gameBet !== undefined) {
-                    puntosAcumulados += game.gameBet.gainedPoints;
-                }
+                puntosAcumulados += (game.gameBet ? game.gameBet.gainedPoints : 0);
                 return puntosAcumulados;
             });
 
             const color = generarColor(idx);
 
             return {
-                label: participante.usuario.replace(/_/g, ' '),
+                label: participante.usuario.replace(/_/g, ' '), // Reemplaza guiones bajos por espacios
                 data: dataProgresiva,
                 borderColor: color,
                 backgroundColor: color,
                 borderWidth: 2,
-                pointRadius: 1,
-                tension: 0.1,
-                hidden: true // POR DEFECTO TODOS OCULTOS para proteger los ánimos del grupo
+                pointRadius: 1, // Puntos pequeños para no saturar la pantalla
+                pointHoverRadius: 5,
+                tension: 0.1, // Curvatura ligera
+                hidden: idx >= 5 // Por defecto SOLO mostramos los primeros 5 para evitar desorden visual
             };
         });
 
+        // 3. Configuración del Chart.js adaptable a temas
         const esOscuro = document.documentElement.getAttribute('data-theme') === 'dark';
         const colorTexto = esOscuro ? '#f8fafc' : '#2c3e50';
         const colorRejilla = esOscuro ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
@@ -190,56 +163,33 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: {
+                        display: false // Ocultamos la leyenda gigante de arriba, usaremos botones abajo
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
                 scales: {
-                    x: { grid: { color: colorRejilla }, ticks: { color: colorTexto } },
-                    y: { grid: { color: colorRejilla }, ticks: { color: colorTexto } }
+                    x: {
+                        grid: { color: colorRejilla },
+                        ticks: { color: colorTexto }
+                    },
+                    y: {
+                        grid: { color: colorRejilla },
+                        ticks: { color: colorTexto },
+                        title: { display: true, text: 'Puntos Totales', color: colorTexto }
+                    }
                 }
             }
         });
 
-        poblarSelectores();
         generarBotonesFiltro();
-        
-        // Inicializar mostrando una comparativa por defecto de los dos primeros de la lista
-        document.getElementById('user1').selectedIndex = 0;
-        document.getElementById('user2').selectedIndex = 1;
-        actualizarModoVersus();
     }
 
-    // Llena las cajas de selección dinámicamente con los 28 nombres
-    function poblarSelectores() {
-        const s1 = document.getElementById('user1');
-        const s2 = document.getElementById('user2');
-        
-        quinielaData.forEach((p, idx) => {
-            const nombre = p.usuario.replace(/_/g, ' ');
-            s1.options[s1.options.length] = new Option(nombre, idx);
-            s2.options[s2.options.length] = new Option(nombre, idx);
-        });
-    }
-
-    // Lógica del modo Versus (Oculta todo y enciende solo los dos seleccionados)
-    function actualizarModoVersus() {
-        const u1Index = parseInt(document.getElementById('user1').value);
-        const u2Index = parseInt(document.getElementById('user2').value);
-
-        miGrafico.data.datasets.forEach((dataset, idx) => {
-            dataset.hidden = !(idx === u1Index || idx === u2Index);
-        });
-
-        miGrafico.update();
-        sincronizarOpacidadBotones();
-    }
-
-    // Activa de golpe la visualización masiva
-    function mostrarTodos() {
-        miGrafico.data.datasets.forEach(dataset => dataset.hidden = false);
-        miGrafico.update();
-        sincronizarOpacidadBotones();
-    }
-
-    // Genera botones individuales pequeños por si quieren añadir un 3er o 4to participante manual
+    // Crear la botonera inferior para encender y apagar competidores
     function generarBotonesFiltro() {
         const contenedor = document.getElementById('zona-filtros');
         contenedor.innerHTML = '';
@@ -247,30 +197,38 @@
         miGrafico.data.datasets.forEach((dataset, idx) => {
             const btn = document.createElement('button');
             btn.innerText = dataset.label;
-            btn.id = `btn-user-${idx}`;
-            btn.style.borderLeft = `4px solid ${dataset.borderColor}`;
+            btn.style.borderLeft = `5px solid ${dataset.borderColor}`;
+            btn.style.opacity = dataset.hidden ? '0.4' : '1';
             
             btn.onclick = () => {
+                const meta = miGrafico.getDatasetMeta(idx);
+                meta.hidden = meta.hidden === null ? !miGrafico.data.datasets[idx].hidden : null;
                 miGrafico.data.datasets[idx].hidden = !miGrafico.data.datasets[idx].hidden;
+                btn.style.opacity = miGrafico.data.datasets[idx].hidden ? '0.4' : '1';
                 miGrafico.update();
-                btn.style.opacity = miGrafico.data.datasets[idx].hidden ? '0.3' : '1';
             };
             contenedor.appendChild(btn);
         });
     }
 
-    function sincronizarOpacidadBotones() {
-        miGrafico.data.datasets.forEach((dataset, idx) => {
-            const btn = document.getElementById(`btn-user-${idx}`);
-            if (btn) btn.style.opacity = dataset.hidden ? '0.3' : '1';
+    // Acciones masivas (Mostrar todos / Ocultar todos)
+    function mostrarModo(modo) {
+        miGrafico.data.datasets.forEach((dataset) => {
+            dataset.hidden = (modo === 'ninguno');
         });
+        miGrafico.update();
+        generarBotonesFiltro();
     }
 
+    // Lógica de cambio de interfaz Claro / Oscuro
     function toggleTema() {
         const html = document.documentElement;
-        const nuevoTema = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        const temaActual = html.getAttribute('data-theme');
+        const nuevoTema = temaActual === 'dark' ? 'light' : 'dark';
+        
         html.setAttribute('data-theme', nuevoTema);
 
+        // Actualizamos los colores internos del gráfico sin destruir la instancia
         const esOscuro = nuevoTema === 'dark';
         const colorTexto = esOscuro ? '#f8fafc' : '#2c3e50';
         const colorRejilla = esOscuro ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
@@ -279,9 +237,12 @@
         miGrafico.options.scales.x.grid.color = colorRejilla;
         miGrafico.options.scales.y.ticks.color = colorTexto;
         miGrafico.options.scales.y.grid.color = colorRejilla;
+        miGrafico.options.scales.y.title.color = colorTexto;
+        
         miGrafico.update();
     }
 
+    // Inicializar al cargar la página
     window.onload = inicializarGrafico;
 </script>
 </body>
