@@ -1,0 +1,59 @@
+{
+  "game": {
+    "title": "7 diferencias",
+    "subtitle": "Celebración de la Cultura Afrodescendiente Costarricense",
+    "totalDifferences": 7,
+    "tolerancePx": 20,
+    "allowHints": true,
+    "maxHints": 2,
+    "hintDurationMs": 2500,
+    "markerSizePx": 50,
+    "completionMessage": "¡Excelente! Has demostrado cuánto conoces nuestra cultura."
+  },
+
+  "differences": [
+    {
+        "descripcion": "flor",
+      "id": 1,
+      "x": 1.3,
+      "y": 6.5
+    },
+    {
+        "descripcion": "riceandbeans",
+      "id": 2,
+      "x": 0.8,
+      "y": 1.2
+    },
+     {
+      "descripcion": "gafas",
+      "id": 3,
+      "x": 9.2,
+      "y": 7
+    },
+    {
+    "descripcion": "guiro",
+      "id": 4,
+      "x": 8.2,
+      "y": 5
+    },
+    {
+      "descripcion": "collar",
+      "id": 5,
+      "x": 1.6,
+      "y": 5.5
+    },
+    {
+      "descripcion": "perrito",
+      "id": 6,
+      "x": 6.2,
+      "y": 2
+    },
+    {
+      "descripcion": "nube",
+      "id": 7,
+      "x": 5.5,
+      "y": 9.5
+    }
+]
+}
+    

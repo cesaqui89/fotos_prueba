@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>7 diferencias</title>
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <main class="game">
+
+        <header class="game-header">
+
+            <div>
+                <h1 id="gameTitle">7 diferencias</h1>
+                <p id="gameSubtitle"></p>
+            </div>
+
+            <div class="stats">
+
+                <div class="stat">
+                    <span class="stat-label">Diferencias</span>
+                    <strong id="differenceCounter">0 / 7</strong>
+                </div>
+
+                <div class="stat">
+                    <span class="stat-label">Tiempo</span>
+                    <strong id="timer">00.00</strong>
+                </div>
+
+                <div class="stat">
+                    <span class="stat-label">Pistas</span>
+                    <strong id="hintCounter">2</strong>
+                </div>
+
+                <button id="audioToggle" class="audio-btn" title="Pausar/Reanudar música">
+                    🔊
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <section class="instructions">
+
+            <p>
+                Encuentra las diferencias en la segunda imagen.
+                Puedes hacer clic aproximadamente sobre ellas.
+            </p>
+
+            <button id="hintButton" class="hint-button">
+                💡 Usar pista
+            </button>
+
+        </section>
+
+
+        <section class="images-container">
+
+            <div class="image-panel">
+
+                <h2>Imagen original</h2>
+
+                <img
+                    id="originalImage"
+                    src="assets/original.png"
+                    alt="Imagen original"
+                >
+
+            </div>
+
+
+            <div
+                id="gameImageContainer"
+                class="image-panel game-image-panel"
+            >
+
+                <h2>Encuentra las diferencias</h2>
+
+                <div class="game-image-wrapper">
+
+                    <img
+                        id="gameImage"
+                        src="assets/diferencias.png"
+                        alt="Imagen con diferencias"
+                    >
+
+                    <div
+                        id="markersLayer"
+                        class="markers-layer"
+                    ></div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- Modal de inicio -->
+
+    <div id="startModal" class="modal visible">
+
+        <div class="modal-content">
+
+            <div class="modal-icon">
+                🔎
+            </div>
+
+            <h2>¿Listo para jugar?</h2>
+
+            <p>
+                Encuentra las 7 diferencias en el menor tiempo posible.
+            </p>
+
+            <button
+                id="startButton"
+                class="primary-button"
+            >
+                Comenzar juego
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- Modal de finalización -->
+
+    <div id="finishModal" class="modal">
+
+        <div class="modal-content">
+
+            <div class="modal-icon">
+                🎉
+            </div>
+
+            <h2>¡Lo lograste!</h2>
+
+            <p id="completionMessage"></p>
+
+            <div class="final-time">
+                <span>Tiempo</span>
+                <strong id="finalTime">00.00</strong>
+                <span>segundos</span>
+            </div>
+
+            <button
+                id="restartButton"
+                class="primary-button"
+            >
+                Jugar nuevamente
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <audio id="bgMusic" src="assets/calypso.mp3" loop preload="auto"></audio>
+
+    <script src="game.js"></script>
+
+</body>
+</html>
