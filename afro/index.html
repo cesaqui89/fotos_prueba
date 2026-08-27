@@ -8,7 +8,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>7 diferencias</title>
+    <title>Encuentra las 7 diferencias</title>
 
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -17,87 +17,131 @@
 
     <main class="game">
 
-        <header class="game-header">
+        <div class="top-controls">
+            <button id="audioToggle" class="audio-btn" title="Pausar/Reanudar música">
+                🔊
+            </button>
+            <button id="themeToggle" class="audio-btn" title="Cambiar tema">
+                🌙
+            </button>
+        </div>
 
-            <div>
-                <h1 id="gameTitle">7 diferencias</h1>
-                <p id="gameSubtitle"></p>
-            </div>
+        <section class="story-section">
 
-            <div class="stats">
-
-                <div class="stat">
-                    <span class="stat-label">Diferencias</span>
-                    <strong id="differenceCounter">0 / 7</strong>
-                </div>
-
-                <div class="stat">
-                    <span class="stat-label">Tiempo</span>
-                    <strong id="timer">00.00</strong>
-                </div>
-
-                <div class="stat">
-                    <span class="stat-label">Pistas</span>
-                    <strong id="hintCounter">2</strong>
-                </div>
-
-                <button id="audioToggle" class="audio-btn" title="Pausar/Reanudar música">
-                    🔊
-                </button>
-
-            </div>
-
-        </header>
-
-
-        <section class="instructions">
+            <h2>God Deh Pon Wi Side</h2>
 
             <p>
-                Encuentra las diferencias en la segunda imagen.
-                Puedes hacer clic aproximadamente sobre ellas.
+                El aroma a tomillo, leche de coco y chile panameño flotaba con fuerza en el aire fresco de la tarde, mientras el ritmo retumbante del tambor marcaba el pulso de la fiesta comunitaria. Frente al toldo adornado donde destacaba la gran pancarta de <em>"Lo mejor de Limón es su gente"</em>, Shanice apretaba contra su pecho el oficio oficial de nombramiento.
             </p>
 
-            <button id="hintButton" class="hint-button">
-                💡 Usar pista
-            </button>
+            <p>
+                Marcus, envuelto en su camisa de patrones tropicales, la tomó de la mano y la hizo girar en medio de la calle abarrotada de vecinos. Sus sonrisas chocaban con el brillo del sol caribeño.
+            </p>
+
+            <p>
+                —<em>We did it, gal!</em> —exclamó Marcus, levantando la voz por encima del repique de las maracas—. Te lo dije, <strong>God deh pon wi side</strong> (<em>Dios está con nosotros</em>). No había forma de que no te dieran esa plaza de maestra aquí mismo en el pueblo.
+            </p>
+
+            <p>
+                Shanice rio con ganas, dejando que el vuelo colorido de su vestidura tradicional acompañara el movimiento de sus pasos de calipso. Volteó a ver la vieja escuela al otro lado del camino, el mismo lugar donde de niña aprendió a leer bajo la sombra de los árboles de pan.
+            </p>
+
+            <p>
+                —<em>Mahn</em>, todavía no lo puedo creer, Marcus —respondió ella con la voz cargada de emoción—. Pasar de sentarme en esos pupitres a estar al frente del aula... <strong>Cho!</strong> Es una bendición enorme. Quiero que estos carajillos sientan el orgullo de nuestra cultura, que sepan quiénes son y de dónde vienen.
+            </p>
+
+            <p>
+                —<em>True, true</em>, vas a ser la mejor <em>teacher</em> que hayan tenido —dijo él, abrazándola por la cintura antes de guiarla hacia la mesa principal, repleta de platillos tradicionales—. Pero ahora, <strong>tek it easy</strong> y celebremos. Hay que ir por ese plato de <em>rice and beans</em> con pollo en salsa que te está esperando allá al frente.
+            </p>
+
+            <p>
+                Shanice miró a su alrededor: la música resonando, los vecinos bailando bajo los carteles de <em>Cultura, Respeto e Historia</em>, y a Marcus a su lado. La alegría le desbordaba el pecho. Había vuelto a su hogar, no solo para quedarse, sino para sembrar futuro en la tierra que la vio crecer.
+            </p>
 
         </section>
 
 
-        <section class="images-container">
+        <section class="game-section">
 
-            <div class="image-panel">
+            <header class="game-header">
 
-                <h2>Imagen original</h2>
+                <div>
+                    <h1 id="gameTitle">Encuentra las 7 diferencias</h1>
+                    <p id="gameSubtitle"></p>
+                </div>
 
-                <img
-                    id="originalImage"
-                    src="assets/original.png"
-                    alt="Imagen original"
-                >
+                <div class="stats">
+
+                    <div class="stat">
+                        <span class="stat-label">Diferencias</span>
+                        <strong id="differenceCounter">0 / 7</strong>
+                    </div>
+
+                    <div class="stat">
+                        <span class="stat-label">Tiempo</span>
+                        <strong id="timer">00.00</strong>
+                    </div>
+
+                    <div class="stat">
+                        <span class="stat-label">Pistas</span>
+                        <strong id="hintCounter">2</strong>
+                    </div>
+
+                </div>
+
+            </header>
+
+
+            <div class="instructions">
+
+                <p>
+                    Encuentra las diferencias en la segunda imagen.
+                    Puedes hacer clic aproximadamente sobre ellas.
+                </p>
+
+                <button id="hintButton" class="hint-button">
+                    💡 Usar pista
+                </button>
 
             </div>
 
 
-            <div
-                id="gameImageContainer"
-                class="image-panel game-image-panel"
-            >
+            <div class="images-container">
 
-                <h2>Encuentra las diferencias</h2>
+                <div class="image-panel">
 
-                <div class="game-image-wrapper">
+                    <h2>Imagen original</h2>
 
                     <img
-                        id="gameImage"
-                        src="assets/diferencias.png"
-                        alt="Imagen con diferencias"
+                        id="originalImage"
+                        src="assets/original.png"
+                        alt="Imagen original"
                     >
 
-                    <div
-                        id="markersLayer"
-                        class="markers-layer"
-                    ></div>
+                </div>
+
+
+                <div
+                    id="gameImageContainer"
+                    class="image-panel game-image-panel"
+                >
+
+                    <h2>Encuentra las diferencias</h2>
+
+                    <div class="game-image-wrapper">
+
+                        <img
+                            id="gameImage"
+                            src="assets/diferencias.png"
+                            alt="Imagen con diferencias"
+                        >
+
+                        <div
+                            id="markersLayer"
+                            class="markers-layer"
+                        ></div>
+
+                    </div>
 
                 </div>
 
@@ -167,6 +211,10 @@
 
     </div>
 
+
+    <footer class="game-footer">
+        <p>Música: <strong>Calypso Rice 'n Beans</strong> — Sergio "Flee" Morales</p>
+    </footer>
 
     <audio id="bgMusic" src="assets/calypso.mp3" loop preload="auto"></audio>
 

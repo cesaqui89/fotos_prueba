@@ -16,6 +16,8 @@ let bgMusic = null;
 
 let audioToggleBtn = null;
 
+let themeToggleBtn = null;
+
 
 /*
 =========================================================
@@ -105,6 +107,7 @@ function initializeGame() {
 
     bgMusic = document.getElementById("bgMusic");
     audioToggleBtn = document.getElementById("audioToggle");
+    themeToggleBtn = document.getElementById("themeToggle");
 
     bgMusic.volume = 0.3;
 
@@ -112,6 +115,13 @@ function initializeGame() {
         "click",
         toggleAudio
     );
+
+    themeToggleBtn.addEventListener(
+        "click",
+        toggleTheme
+    );
+
+    applySavedTheme();
 
 }
 
@@ -167,6 +177,52 @@ function toggleAudio() {
         audioToggleBtn.textContent = "🔇";
 
         audioToggleBtn.classList.add("muted");
+
+    }
+
+}
+
+
+/*
+=========================================================
+ALTERNAR TEMA OSCURO / CLARO
+=========================================================
+*/
+
+function toggleTheme() {
+
+    document.body.classList.toggle("dark");
+
+    const isDark =
+        document.body.classList.contains("dark");
+
+    themeToggleBtn.textContent =
+        isDark ? "☀️" : "🌙";
+
+    localStorage.setItem(
+        "theme",
+        isDark ? "dark" : "light"
+    );
+
+}
+
+
+/*
+=========================================================
+APLICAR TEMA GUARDADO
+=========================================================
+*/
+
+function applySavedTheme() {
+
+    const saved =
+        localStorage.getItem("theme");
+
+    if (saved === "dark") {
+
+        document.body.classList.add("dark");
+
+        themeToggleBtn.textContent = "☀️";
 
     }
 

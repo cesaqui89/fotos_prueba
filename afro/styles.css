@@ -24,10 +24,29 @@ body {
 }
 
 
+/* CONTROLES SUPERIORES */
+
+.top-controls {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+
+    padding: 12px 24px;
+}
+
+
 .game {
     width: min(1500px, 96%);
     margin: auto;
-    padding: 25px 0 40px;
+    padding: 0 0 40px;
+}
+
+
+/* SECCIÓN DEL JUEGO */
+
+.game-section {
+    margin-top: 25px;
 }
 
 
@@ -407,6 +426,119 @@ button:disabled {
 }
 
 
+/* CUENTO */
+
+.story-section {
+    margin-top: 30px;
+    padding: 25px 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.06);
+    line-height: 1.8;
+}
+
+.story-section h2 {
+    margin-top: 0;
+    font-size: 1.4rem;
+    color: #333;
+}
+
+.story-section p {
+    margin: 0 0 15px;
+    text-align: justify;
+}
+
+.story-section p:last-child {
+    margin-bottom: 0;
+}
+
+
+/* FOOTER */
+
+.game-footer {
+    text-align: center;
+    margin-top: 30px;
+    padding: 15px;
+    color: #888;
+    font-size: 0.85rem;
+}
+
+.game-footer strong {
+    color: #555;
+}
+
+
+/* MODO OSCURO */
+
+body.dark {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    color: #e0e0e0;
+}
+
+body.dark .game-header h1 {
+    color: #f0f0f0;
+}
+
+body.dark .stat {
+    background: #1e1e2f;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.3);
+}
+
+body.dark .stat-label {
+    color: #aaa;
+}
+
+body.dark .stat strong {
+    color: #fff;
+}
+
+body.dark .instructions {
+    background: #1e1e2f;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.3);
+}
+
+body.dark .primary-button {
+    background: #e0e0e0;
+    color: #1a1a2e;
+}
+
+body.dark .audio-btn {
+    background: #1e1e2f;
+    color: #e0e0e0;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.3);
+}
+
+body.dark .modal-content {
+    background: #1e1e2f;
+    color: #e0e0e0;
+}
+
+body.dark .final-time {
+    background: #2a2a3f;
+}
+
+body.dark .final-time span {
+    color: #aaa;
+}
+
+body.dark .story-section {
+    background: #1e1e2f;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.3);
+}
+
+body.dark .story-section h2 {
+    color: #f0f0f0;
+}
+
+body.dark .game-footer {
+    color: #666;
+}
+
+body.dark .game-footer strong {
+    color: #999;
+}
+
+
 /* RESPONSIVE */
 
 @media (max-width: 900px) {
@@ -425,10 +557,6 @@ button:disabled {
         flex: 1;
     }
 
-    .audio-btn {
-        flex: 0 0 auto;
-    }
-
     .images-container {
         grid-template-columns: 1fr;
     }
@@ -440,7 +568,6 @@ button:disabled {
 
     .game {
         width: 94%;
-        padding-top: 15px;
     }
 
     .stats {
@@ -464,18 +591,6 @@ button:disabled {
 
     .hint-button {
         width: 100%;
-    }
-
-    .audio-btn {
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-
-        font-size: 1rem;
-
-        grid-column: 1 / -1;
-
-        justify-self: center;
     }
 
 }
